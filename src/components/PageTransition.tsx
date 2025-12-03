@@ -41,8 +41,9 @@ export function PageTransition({ onPathChange, onNavigate }: PageTransitionProps
 
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription && typeof pageData.seo_metadata?.description === 'string') {
-      metaDescription.setAttribute('content', pageData.seo_metadata.description);
+    const metaDescriptionContent = pageData.seo_metadata?.description;
+    if (metaDescription && typeof metaDescriptionContent === 'string') {
+      metaDescription.setAttribute('content', metaDescriptionContent);
     }
 
     // Update robots meta tag
