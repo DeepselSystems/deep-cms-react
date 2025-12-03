@@ -35,19 +35,19 @@ export function PageTransition({ onPathChange, onNavigate }: PageTransitionProps
     if (!pageData) return;
 
     // Update title
-    if (pageData.seo_metadata?.title) {
+    if (pageData.seo_metadata?.title && typeof pageData.seo_metadata?.title === 'string') {
       document.title = pageData.seo_metadata.title;
     }
 
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription && pageData.seo_metadata?.description) {
+    if (metaDescription && typeof pageData.seo_metadata?.description === 'string') {
       metaDescription.setAttribute('content', pageData.seo_metadata.description);
     }
 
     // Update robots meta tag
     const metaRobots = document.querySelector('meta[name="robots"]');
-    if (metaRobots) {
+    if (metaRobots && typeof pageData.seo_metadata?.allow_indexing === 'boolean') {
       const robotsContent = pageData.seo_metadata?.allow_indexing
         ? 'index, follow'
         : 'noindex, nofollow';
