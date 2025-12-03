@@ -19,6 +19,33 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./components/PageDataManager": {
+      "import": "./dist/components/PageDataManager.js",
+      "types": "./dist/components/PageDataManager.d.ts"
+    },
+    "./hooks/useAuthentication": {
+      "import": "./dist/hooks/useAuthentication.js",
+      "types": "./dist/hooks/useAuthentication.d.ts"
+    },
+    "./hooks/useLanguage": {
+      "import": "./dist/hooks/useLanguage.js",
+      "types": "./dist/hooks/useLanguage.d.ts"
+    },
+    "./hooks/useNavigation": {
+      "import": "./dist/hooks/useNavigation.js",
+      "types": "./dist/hooks/useNavigation.d.ts"
+    },
+    "./hooks/usePageData": {
+      "import": "./dist/hooks/usePageData.js",
+      "types": "./dist/hooks/usePageData.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -44,20 +71,22 @@
   ],
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.10.0",
     "@types/react": "^18.3.0",
     "eslint": "^9.39.1",
     "eslint-plugin-vitest": "^0.5.4",
+    "happy-dom": "^20.0.11",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
     "vitest": "^4.0.8"
   },
-  "dependencies": {
-    "@deepsel/cms-utils": "file:../cms-utils",
-    "zustand": "^5.0.2"
-  },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "@capacitor/preferences": ">=7.0.0",
+    "@deepsel/cms-utils": ">=1.0.0 <2.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   }
 }

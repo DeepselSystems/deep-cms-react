@@ -1,82 +1,62 @@
-import { useEffect } from "react";
-import type { PageData } from "@deepsel/cms-utils";
-import { usePageData, usePageDataStore } from "./pageDataStore";
-import { fetchPageData, parseSlugForLangAndPath } from "@deepsel/cms-utils";
+import { useEffect } from 'react';
+import { usePageData } from '../contexts/PageDataContext';
+import { fetchPageData, parseSlugForLangAndPath } from '@deepsel/cms-utils';
 
 interface PageTransitionProps {
-  pageData: PageData;
   onPathChange?: (path: string) => void;
   onNavigate?: (url: string, event: MouseEvent) => void;
 }
 
-export function PageTransition({ 
-  pageData, 
-  onPathChange,
-  onNavigate
-}: PageTransitionProps) {
+export function PageTransition({ onPathChange, onNavigate }: PageTransitionProps) {
   // Initialize the page data store
-  const { initialize, setPageData } = usePageData(pageData);
+  const { pageData, setPageData } = usePageData();
 
   // Client-side navigation function
   const navigateToUrl = async (url: string) => {
     try {
       const { lang, path } = parseSlugForLangAndPath(url);
       const newPageData = await fetchPageData(lang, path);
-      
+
       if ('error' in newPageData || 'notFound' in newPageData) {
         window.location.href = url;
         return;
       }
-      
+
       window.history.pushState(null, '', url);
       setPageData(newPageData);
-      onPathChange?.(window.location.pathname);
-      
+      // onPathChange?.(window.location.pathname);
     } catch (error) {
-      console.error("Navigation error:", error);
+      console.error('Navigation error:', error);
     }
   };
 
   useEffect(() => {
-    // Initialize with the provided pageData
-    initialize(pageData);
-    
-    // Set global flag to indicate PageTransition is active
-    (window as any).pageTransition = true;
-    
-    return () => {
-      (window as any).pageTransition = false;
-    };
-  }, [pageData, initialize]);
-
-  useEffect(() => {
     // Update document title and meta tags when page data changes
-    const { pageData: currentPageData } = usePageDataStore.getState();
-    if (!currentPageData) return;
+    if (!pageData) return;
 
     // Update title
-    if (currentPageData.seo_metadata?.title) {
-      document.title = currentPageData.seo_metadata.title;
+    if (pageData.seo_metadata?.title) {
+      document.title = pageData.seo_metadata.title;
     }
 
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription && currentPageData.seo_metadata?.description) {
-      metaDescription.setAttribute('content', currentPageData.seo_metadata.description);
+    if (metaDescription && pageData.seo_metadata?.description) {
+      metaDescription.setAttribute('content', pageData.seo_metadata.description);
     }
 
     // Update robots meta tag
     const metaRobots = document.querySelector('meta[name="robots"]');
     if (metaRobots) {
-      const robotsContent = currentPageData.seo_metadata?.allow_indexing 
-        ? 'index, follow' 
+      const robotsContent = pageData.seo_metadata?.allow_indexing
+        ? 'index, follow'
         : 'noindex, nofollow';
       metaRobots.setAttribute('content', robotsContent);
     }
 
     // Update html lang attribute
-    if (currentPageData.lang) {
-      document.documentElement.lang = currentPageData.lang;
+    if (pageData.lang) {
+      document.documentElement.lang = pageData.lang;
     }
   }, [pageData]);
 
@@ -84,55 +64,65 @@ export function PageTransition({
     // Watch for URL path changes (browser back/forward)
     const handlePathChange = async () => {
       const currentPath = window.location.pathname;
-      
+
       try {
         const { lang, path } = parseSlugForLangAndPath(currentPath);
         const newPageData = await fetchPageData(lang, path);
-        
+
         if (!('error' in newPageData) && !('notFound' in newPageData)) {
           setPageData(newPageData);
         }
       } catch (error) {
-        console.error("Error fetching page data on path change:", error);
+        console.error('Error fetching page data on path change:', error);
       }
-      
+
       onPathChange?.(currentPath);
     };
 
-    window.addEventListener("popstate", handlePathChange);
+    const handlePathChangeListener = () => {
+      void handlePathChange();
+    };
 
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    window.addEventListener('popstate', handlePathChangeListener);
+
+    const originalPushState = history.pushState.bind(history);
+    const originalReplaceState = history.replaceState.bind(history);
 
     history.pushState = function (...args) {
-      originalPushState.apply(this, args);
-      handlePathChange();
+      originalPushState(...args);
+      void handlePathChange();
     };
 
     history.replaceState = function (...args) {
-      originalReplaceState.apply(this, args);
-      handlePathChange();
+      originalReplaceState(...args);
+      void handlePathChange();
     };
 
     return () => {
-      window.removeEventListener("popstate", handlePathChange);
+      window.removeEventListener('popstate', handlePathChangeListener);
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
-  }, [onPathChange, setPageData]);
+  }, [setPageData]);
 
   useEffect(() => {
     // Intercept all <a> tag clicks for client-side navigation
     const handleLinkClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const link = target.closest('a');
-      
+
       if (!link) return;
 
       const href = link.getAttribute('href');
-      
+
       // Skip if no href or it's an external link
-      if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+      if (
+        !href ||
+        href.startsWith('http') ||
+        href.startsWith('//') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:')
+      ) {
         return;
       }
 
@@ -165,7 +155,7 @@ export function PageTransition({
       if (onNavigate) {
         onNavigate(href, event);
       } else {
-        navigateToUrl(href);
+        void navigateToUrl(href);
       }
     };
 

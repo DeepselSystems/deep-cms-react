@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { parseSlugForLangAndPath } from '@deepsel/cms-utils';
-import { usePageData } from '../pageDataStore';
+import { usePageData } from '../contexts/PageDataContext';
 
 /**
  * React hook to read and change the current language.
@@ -9,7 +9,7 @@ import { usePageData } from '../pageDataStore';
  * - `setLanguage` updates the URL based on the current page and its language alternatives.
  */
 export function useLanguage() {
-  const { pageData, setPageData } = usePageData();
+  const { pageData } = usePageData();
 
   const language = useMemo(() => {
     if (pageData?.lang) {
@@ -21,19 +21,16 @@ export function useLanguage() {
 
   const availableLanguages = useMemo(
     () => pageData?.public_settings?.available_languages || [],
-    [pageData?.public_settings?.available_languages]
+    [pageData?.public_settings?.available_languages],
   );
 
-  const setLanguage = async (targetLangCode: string) => {
+  const setLanguage = (targetLangCode: string) => {
     if (!pageData) {
       return;
     }
 
-    // Update the language in pageData immediately
-    setPageData({
-      ...pageData,
-      lang: targetLangCode,
-    });
+    // Note: With context-based approach, we just navigate to the new URL
+    // The page will reload with the correct language data
 
     // In the browser environment, we will need to change the URL to match
     if (typeof window === 'undefined') {
@@ -67,15 +64,8 @@ export function useLanguage() {
         ? `/${targetLangCode}${targetPath}`
         : targetPath;
 
-    // Check if PageTransition is active (client-side routing enabled)
-    if ((window as any).pageTransition) {
-      // Just update the URL, PageTransition will handle fetching new data
-      window.history.pushState(null, '', finalUrl);
-    } else {
-      // PageTransition not active, use traditional page reload
-      window.history.pushState(null, '', finalUrl);
-      window.location.reload();
-    }
+    // Just update the URL, PageTransition will handle fetching new data
+    window.history.pushState(null, '', finalUrl);
   };
 
   return { language, setLanguage, availableLanguages } as const;
